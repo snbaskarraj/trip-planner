@@ -93,17 +93,51 @@ In `backend/app/routers/trips.py`, comment out `assert_time_order(start_time, en
 
 `.github/workflows/ci.yml` runs pytest and Vitest on every push and pull request. A deploy job runs only on `main`, and only after both test jobs pass (`needs:`).
 
-1. Create a GitHub repo and push this project.
-2. Open the Actions tab and confirm the workflow is green.
-3. Connect `frontend/` to Vercel. Set build-time env `VITE_API_URL` to the deployed backend origin.
-4. Deploy the backend container (Render, Fly, Railway, or Cloud Run). Set `WEATHER_API_KEY` and `CORS_ORIGINS` in the provider dashboard — never in git.
-5. Optional: set repo secret `DEPLOY_WEBHOOK_URL` so the gated deploy job actually triggers your host.
+### Deploy the backend to Render
+
+The repository includes `render.yaml`, which creates a Python web service. The
+current blueprint uses SQLite, matching local development; note that Render's
+free web-service filesystem is ephemeral, so use a hosted database before
+production data matters.
+
+1. Open [Render](https://dashboard.render.com), choose **New -> Blueprint**, and
+  select `snbaskarraj/trip-planner`.
+2. Review the `trip-planner-api` web service and `trip-planner-db` database, then
+  apply the blueprint.
+3. In the web service's **Environment** page, set `CORS_ORIGINS` to the exact
+  deployed Vercel origin, for example `https://trip-planner.vercel.app`.
+4. Set `WEATHER_API_KEY` to your provider key, or leave it empty to use the
+  Open-Meteo fallback. Never commit either value.
+5. Wait for `/health` to become healthy and copy the service URL, such as
+  `https://trip-planner-api.onrender.com`.
+6. In Vercel, set `VITE_API_BASE_URL` to that backend URL with no trailing slash and
+  redeploy the frontend.
+
+To enable the existing gated GitHub deploy job, open the Render service's
+**Settings -> Deploy Hook**, copy the generated URL, and add it as a repository
+secret named `DEPLOY_WEBHOOK_URL`:
 
 ```bash
-# backend image
+gh secret set DEPLOY_WEBHOOK_URL --repo snbaskarraj/trip-planner
+```
+
+Paste the Render URL only when the GitHub CLI prompts. Do not put it in a file or
+command argument. The workflow will call the hook only after backend and
+frontend tests pass on a push to `main`.
+
+1. Create a GitHub repo and push this project.
+2. Open the Actions tab and confirm the workflow is green.
+3. Connect `frontend/` to Vercel with **Root Directory** set to `frontend`. Set
+  build-time env `VITE_API_BASE_URL` to the deployed backend origin.
+4. Deploy the backend with the root `render.yaml` Blueprint ([Render dashboard → Blueprints](https://dashboard.render.com/blueprints)). New → connect `snbaskarraj/trip-planner`. When prompted, set dashboard-only env vars (never git):
+   - `WEATHER_API_KEY` — OpenWeatherMap key, or leave empty to use Open-Meteo
+   - `CORS_ORIGINS` — the Vercel origin, e.g. `https://your-app.vercel.app`
+5. Optional automatic deploys after CI: in the Render service, open Settings → Deploy Hook, copy the URL, then add GitHub Actions secret `DEPLOY_WEBHOOK_URL`. The `deploy-backend` job on `main` will POST it only after tests pass.
+
+```bash
+# backend local fallback
 cd backend
-docker build -t trip-planner-backend .
-docker run --rm -p 8000:8000 -e WEATHER_API_KEY=your-key trip-planner-backend
+.venv/bin/uvicorn app.main:app --reload --port 8000
 ```
 
 ---
