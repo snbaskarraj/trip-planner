@@ -34,6 +34,12 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/api/runtime")
+def runtime():
+    """Safe: dialect only, never the URL or password."""
+    return {"database": engine.url.get_backend_name()}
+
+
 app.include_router(trips.router)
 app.include_router(days.router)
 app.include_router(activities.router)
