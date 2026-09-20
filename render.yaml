@@ -23,3 +23,4 @@ services:
 databases:
   - name: trip-planner-db
     plan: free
+    region: singapore
