@@ -5,9 +5,9 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://trip-planner-2-3t88.onrender.com/api/:path*"
+      "destination": "https://trip-planner-2-3t88-n3kx.onrender.com/api/:path*"
     },
-    { "source": "/health", "destination": "https://trip-planner-2-3t88.onrender.com/health" },
+    { "source": "/health", "destination": "https://trip-planner-2-3t88-n3kx.onrender.com/health" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
