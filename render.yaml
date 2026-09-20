@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: trip-planner-api
+    runtime: python
+    plan: free
+    region: singapore
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
+      - key: WEATHER_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
